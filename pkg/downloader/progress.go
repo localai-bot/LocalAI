@@ -54,7 +54,7 @@ func (pw *progressWriter) Write(p []byte) (n int, err error) {
 				percentage += float64(pw.fileNo) * 100 / float64(pw.totalFiles)
 			}
 		}
-		//log.Debug().Msgf("Downloading %s: %s/%s (%.2f%%)", pw.fileName, formatBytes(pw.written), formatBytes(pw.total), percentage)
+		xlog.Info().Msgf("Downloading %s: %s/%s (%.2f%%)", pw.fileName, formatBytes(pw.written), formatBytes(pw.total), percentage)
 		pw.downloadStatus(pw.fileName, formatBytes(pw.written), formatBytes(pw.total), percentage)
 	} else {
 		pw.downloadStatus(pw.fileName, formatBytes(pw.written), "", 0)
