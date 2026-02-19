@@ -248,8 +248,11 @@ func InstallModel(ctx context.Context, systemState *system.SystemState, nameOver
 		configMap["name"] = name
 
 		if configOverrides != nil {
-			if err := mergo.Merge(&configMap, configOverrides, mergo.WithOverride); err != nil {
-				return nil, err
+			normalizedOverrides := normalizeMapKeys(configOverrides)
+			if normalizedMap, ok := normalizedOverrides.(map[string]interface{}); ok {
+				if err := mergo.Merge(&configMap, normalizedMap, mergo.WithOverride); err != nil {
+					return nil, err
+				}
 			}
 		}
 
@@ -290,6 +293,37 @@ func InstallModel(ctx context.Context, systemState *system.SystemState, nameOver
 
 func galleryFileName(name string) string {
 	return "._gallery_" + name + ".yaml"
+}
+
+// normalizeMapKeys recursively converts map[interface{}]interface{} to map[string]interface{}.
+// This is necessary because gopkg.in/yaml.v3 unmarshals YAML anchors into map[interface{}]interface{},
+// but mergo.Merge expects map[string]interface{}.
+func normalizeMapKeys(v interface{}) interface{} {
+	switch val := v.(type) {
+	case map[interface{}]interface{}:
+		m := make(map[string]interface{}, len(val))
+		for k, v := range val {
+			key, ok := k.(string)
+			if !ok {
+				key = fmt.Sprintf("%v", k)
+			}
+			m[key] = normalizeMapKeys(v)
+		}
+		return m
+	case map[string]interface{}:
+		m := make(map[string]interface{}, len(val))
+		for k, v := range val {
+			m[k] = normalizeMapKeys(v)
+		}
+		return m
+	case []interface{}:
+		for i, v := range val {
+			val[i] = normalizeMapKeys(v)
+		}
+		return val
+	default:
+		return v
+	}
 }
 
 func GetLocalModelConfiguration(basePath string, name string) (*ModelConfig, error) {

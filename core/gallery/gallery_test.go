@@ -1,12 +1,14 @@
 package gallery_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
 	"dario.cat/mergo"
 	"github.com/mudler/LocalAI/core/config"
 	. "github.com/mudler/LocalAI/core/gallery"
+	"github.com/mudler/LocalAI/pkg/system"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"gopkg.in/yaml.v3"
@@ -517,6 +519,100 @@ var _ = Describe("Gallery", func() {
 			// Verify the merge worked correctly
 			mergedParams := configMap["parameters"].(map[string]interface{})
 			Expect(mergedParams["model"]).To(Equal("nanbeige4.1-3b-q4_k_m.gguf"))
+		})
+	})
+
+	Describe("InstallModel with YAML anchors", func() {
+		var tempDir string
+		var systemState *system.SystemState
+
+		BeforeEach(func() {
+			var err error
+			tempDir, err = os.MkdirTemp("", "install-model-test-*")
+			Expect(err).NotTo(HaveOccurred())
+
+			// Create system state with model path
+			modelPath := filepath.Join(tempDir, "models")
+			err = os.MkdirAll(modelPath, 0750)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Initialize system state - using the proper struct
+			// We'll create a minimal system state
+			systemState = &system.SystemState{}
+			systemState.Model.ModelsPath = modelPath
+		})
+
+		AfterEach(func() {
+			os.RemoveAll(tempDir)
+		})
+
+		It("should not panic when configOverrides contains map[interface{}]interface{} from YAML anchors", func() {
+			// Simulate YAML anchors creating map[interface{}]interface{} in overrides
+			// This is the root cause of the panic in issue #8569
+			configOverrides := map[string]interface{}{
+				"backend": "llama-cpp",
+				"parameters": map[interface{}]interface{}{
+					"model": "test-model.gguf",
+				},
+			}
+
+			config := &ModelConfig{
+				Name:       "test-model",
+				ConfigFile: "backend: llama-cpp\n",
+			}
+
+			ctx := context.Background()
+
+			// This should NOT panic - it's the regression test for issue #8569
+			Expect(func() {
+				_, err := InstallModel(ctx, systemState, "test-model", config, configOverrides, nil, false)
+				// We don't care about the error for this test - we just want to ensure no panic
+				_ = err
+			}).NotTo(Panic())
+
+			// Verify the config file was written
+			configFilePath := filepath.Join(systemState.Model.ModelsPath, "test-model.yaml")
+			_, err := os.Stat(configFilePath)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should properly merge nested map[interface{}]interface{} structures", func() {
+			// Test with deeply nested map[interface{}]interface{} structures
+			configOverrides := map[string]interface{}{
+				"backend": "llama-cpp",
+				"parameters": map[interface{}]interface{}{
+					"model": "nested-model.gguf",
+					"top_p": 0.9,
+				},
+			}
+
+			config := &ModelConfig{
+				Name:       "nested-test-model",
+				ConfigFile: "backend: original\n",
+			}
+
+			ctx := context.Background()
+
+			// This should not panic and should properly merge the overrides
+			Expect(func() {
+				_, err := InstallModel(ctx, systemState, "nested-test-model", config, configOverrides, nil, false)
+				_ = err
+			}).NotTo(Panic())
+
+			// Verify the config file was written
+			configFilePath := filepath.Join(systemState.Model.ModelsPath, "nested-test-model.yaml")
+			yamlContent, err := os.ReadFile(configFilePath)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Verify the merged content
+			var result map[string]interface{}
+			err = yaml.Unmarshal(yamlContent, &result)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result["backend"]).To(Equal("llama-cpp"))
+			Expect(result["parameters"]).NotTo(BeNil())
+			params := result["parameters"].(map[string]interface{})
+			Expect(params["model"]).To(Equal("nested-model.gguf"))
+			Expect(params["top_p"]).To(Equal(0.9))
 		})
 	})
 })
