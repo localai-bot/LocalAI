@@ -60,6 +60,31 @@ class BackendServicer(backend_pb2_grpc.BackendServicer):
         """
         return backend_pb2.Reply(message=bytes("OK", 'utf-8'))
 
+    def _initialize_rdma(self):
+        """
+        Initialize RDMA support using mlx.distributed if enabled.
+        """
+        # Check if RDMA is enabled via environment variable
+        mlx_rdma_enabled = os.environ.get("MLX_GRPC_SERVERS", "") != ""
+        
+        if mlx_rdma_enabled:
+            try:
+                print("Initializing RDMA with mlx.distributed...", file=sys.stderr)
+                mx.distributed.init(backend="jaccl")
+                print(f"RDMA initialized: rank={mx.distributed.rank()}, world_size={mx.distributed.world_size()}", file=sys.stderr)
+                self.rdma_enabled = True
+                self.rdma_rank = mx.distributed.rank()
+                self.rdma_world_size = mx.distributed.world_size()
+            except Exception as e:
+                print(f"Failed to initialize RDMA: {e}", file=sys.stderr)
+                self.rdma_enabled = False
+                self.rdma_rank = 0
+                self.rdma_world_size = 1
+        else:
+            self.rdma_enabled = False
+            self.rdma_rank = 0
+            self.rdma_world_size = 1
+
     async def LoadModel(self, request, context):
         """
         Loads a language model using MLX.
@@ -130,6 +155,9 @@ class BackendServicer(backend_pb2_grpc.BackendServicer):
                 can_trim_fn=can_trim_prompt_cache,
                 trim_fn=trim_prompt_cache,
             )
+            
+            # Initialize RDMA support
+            self._initialize_rdma()
                 
         except Exception as err:
             print(f"Error loading MLX model {err=}, {type(err)=}", file=sys.stderr)

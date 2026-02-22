@@ -141,9 +141,10 @@ func (r *RunCMD) Run(ctx *cliContext.Context) error {
 		config.WithAgentJobRetentionDays(r.AgentJobRetentionDays),
 		config.WithTunnelCallback(func(tunnels []string) {
 			tunnelEnvVar := strings.Join(tunnels, ",")
-			// TODO: this is very specific to llama.cpp, we should have a more generic way to set the environment variable
 			os.Setenv("LLAMACPP_GRPC_SERVERS", tunnelEnvVar)
+			os.Setenv("MLX_GRPC_SERVERS", tunnelEnvVar)
 			xlog.Debug("setting LLAMACPP_GRPC_SERVERS", "value", tunnelEnvVar)
+			xlog.Debug("setting MLX_GRPC_SERVERS", "value", tunnelEnvVar)
 		}),
 	}
 
