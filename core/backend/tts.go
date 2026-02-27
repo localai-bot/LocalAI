@@ -69,6 +69,7 @@ func ModelTTS(
 	}
 
 	res, err := ttsModel.TTS(context.Background(), &proto.TTSRequest{
+		AudioPath: modelConfig.AudioPath,
 		Text:     text,
 		Model:    modelPath,
 		Voice:    voice,
@@ -159,6 +160,7 @@ func ModelTTSStream(
 	var callbackErr error
 
 	err = ttsModel.TTSStream(context.Background(), &proto.TTSRequest{
+		AudioPath: modelConfig.AudioPath,
 		Text:     text,
 		Model:    modelPath,
 		Voice:    voice,

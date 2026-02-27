@@ -336,6 +336,7 @@ message GenerateVideoRequest {
 }
 
 message TTSRequest {
+  optional string audio_path = 6;
   string text = 1;
   string model = 2;
   string dst = 3;
