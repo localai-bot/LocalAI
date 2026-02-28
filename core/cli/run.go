@@ -102,6 +102,7 @@ func (r *RunCMD) Run(ctx *cliContext.Context) error {
 		system.WithBackendSystemPath(r.BackendsSystemPath),
 		system.WithModelPath(r.ModelsPath),
 		system.WithBackendPath(r.BackendsPath),
+		system.WithGRPCServers(""),
 	)
 	if err != nil {
 		return err

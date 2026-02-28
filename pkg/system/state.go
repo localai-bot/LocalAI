@@ -8,6 +8,7 @@ import (
 type Backend struct {
 	BackendsPath       string
 	BackendsSystemPath string
+	GRPCServers string
 }
 
 type Model struct {
@@ -34,6 +35,12 @@ func WithBackendPath(path string) SystemStateOptions {
 func WithBackendSystemPath(path string) SystemStateOptions {
 	return func(s *SystemState) {
 		s.Backend.BackendsSystemPath = path
+	}
+}
+
+func WithGRPCServers(servers string) SystemStateOptions {
+	return func(s *SystemState) {
+		s.Backend.GRPCServers = servers
 	}
 }
 
