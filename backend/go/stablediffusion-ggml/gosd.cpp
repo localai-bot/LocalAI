@@ -41,6 +41,8 @@ const char* sample_method_str[] = {
     "lcm",
     "ddim_trailing",
     "tcd",
+    "res_multistep",
+    "res_2s",
 };
 
 static_assert(std::size(sample_method_str) == SAMPLE_METHOD_COUNT, "sample method mismatch");
@@ -57,6 +59,7 @@ const char* schedulers[] = {
     "smoothstep",
     "kl_optimal",
     "lcm",
+    "bong_tangent",
 };
 
 static_assert(std::size(schedulers) == SCHEDULER_COUNT, "schedulers mismatch");
