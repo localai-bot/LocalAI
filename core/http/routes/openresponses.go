@@ -45,7 +45,7 @@ func RegisterOpenResponsesRoutes(app *echo.Echo,
 	app.POST("/responses/:id/cancel", cancelResponseHandler, middleware.TraceMiddleware(application))
 
 	// WebSocket endpoint for OpenAI Responses API WebSocket Mode
-	websocketHandler := openresponses.WebSocketEndpoint(
+	websocketHandler := openresponses.ResponsesWebSocket(
 		application.ModelConfigLoader(),
 		application.ModelLoader(),
 		application.TemplatesEvaluator(),
