@@ -1,0 +1,26 @@
+# CUDA 12 dependencies for MLX Video Backend
+# Uses PyTorch with CUDA 12 support
+
+# Core dependencies
+grpcio>=1.60.0
+grpcio-tools>=1.60.0
+requests>=2.31.0
+numpy>=1.24.0
+Pillow>=10.0.0
+tqdm>=4.66.0
+
+# PyTorch with CUDA 12
+torch>=2.1.0 --index-url https://download.pytorch.org/whl/cu121
+torchvision>=0.16.0 --index-url https://download.pytorch.org/whl/cu121
+
+# Video generation libraries
+diffusers>=0.24.0
+transformers>=4.35.0
+accelerate>=0.24.0
+
+# Optional: xformers for improved performance (requires matching CUDA version)
+# xformers>=0.0.23
+
+# Video processing
+imageio>=2.33.0
+imageio-ffmpeg>=0.4.9

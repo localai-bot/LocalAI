@@ -1,0 +1,11 @@
+# MPS-specific dependencies for macOS
+# Includes all core dependencies plus MPS-specific optimizations
+
+-r requirements.txt
+
+# MPS-specific packages
+# Note: torch with MPS support is included in the core torch package for macOS
+# No additional packages needed beyond what's in requirements.txt
+
+# Optional: xformers for improved memory efficiency on MPS
+# xformers>=0.0.23  # Uncomment if xformers MPS support is needed
