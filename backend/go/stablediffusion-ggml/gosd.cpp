@@ -726,7 +726,6 @@ int load_model(const char *model, char *model_path, char* options[], int threads
     ctx_params.chroma_use_dit_mask = chroma_use_dit_mask;
     ctx_params.chroma_use_t5_mask = chroma_use_t5_mask;
     ctx_params.chroma_t5_mask_pad = chroma_t5_mask_pad;
-    ctx_params.flow_shift = flow_shift;
     sd_ctx_t* sd_ctx = new_sd_ctx(&ctx_params);
 
     if (sd_ctx == NULL) {
@@ -875,6 +874,7 @@ int gen_image(sd_img_gen_params_t *p, int steps, char *dst, float cfg_scale, cha
     p->sample_params.sample_method = sample_method;
     p->sample_params.sample_steps = steps;
     p->sample_params.scheduler = scheduler;
+    p->sample_params.flow_shift = flow_shift;
 
     int width = p->width;
     int height = p->height;
