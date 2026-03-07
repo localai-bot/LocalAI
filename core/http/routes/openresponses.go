@@ -43,6 +43,10 @@ func RegisterOpenResponsesRoutes(app *echo.Echo,
 	cancelResponseHandler := openresponses.CancelResponseEndpoint()
 	app.POST("/v1/responses/:id/cancel", cancelResponseHandler, middleware.TraceMiddleware(application))
 	app.POST("/responses/:id/cancel", cancelResponseHandler, middleware.TraceMiddleware(application))
+
+	// WebSocket endpoint for /v1/responses
+	app.GET("/v1/responses", openresponses.ResponsesWebSocket(application), middleware.TraceMiddleware(application))
+	app.GET("/responses", openresponses.ResponsesWebSocket(application), middleware.TraceMiddleware(application))
 }
 
 // setOpenResponsesRequestContext sets up the context and cancel function for Open Responses requests
