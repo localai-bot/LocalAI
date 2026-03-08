@@ -32,7 +32,7 @@ var embedDirStatic embed.FS
 
 // Embed React UI build output
 //
-//go:embed react-ui/dist/*
+//go:embed react-ui
 var reactUI embed.FS
 
 var quietPaths = []string{"/api/operations", "/api/resources", "/healthz", "/readyz"}
