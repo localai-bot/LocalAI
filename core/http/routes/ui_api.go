@@ -225,6 +225,12 @@ func RegisterUIAPIRoutes(app *echo.Echo, cl *config.ModelConfigLoader, ml *model
 			models = gallery.GalleryElements[*gallery.GalleryModel](models).Search(term)
 		}
 
+		// Filter by tag if provided (exact match)
+		tag := c.QueryParam("tag")
+		if tag != "" {
+			models = gallery.GalleryElements[*gallery.GalleryModel](models).FilterByTag(tag)
+		}
+
 		// Get model statuses
 		processingModelsData, taskTypes := opcache.GetStatus()
 
@@ -605,6 +611,12 @@ func RegisterUIAPIRoutes(app *echo.Echo, cl *config.ModelConfigLoader, ml *model
 
 		if term != "" {
 			backends = gallery.GalleryElements[*gallery.GalleryBackend](backends).Search(term)
+		}
+
+		// Filter by tag if provided (exact match)
+		tag := c.QueryParam("tag")
+		if tag != "" {
+			backends = gallery.GalleryElements[*gallery.GalleryBackend](backends).FilterByTag(tag)
 		}
 
 		// Get backend statuses
