@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 gRPC server of LocalAI for NVIDIA NEMO Toolkit ASR.
+Fixed to handle transcription without dataloader issues.
 """
 from concurrent import futures
 import time
@@ -12,6 +13,8 @@ import backend_pb2
 import backend_pb2_grpc
 import torch
 import nemo.collections.asr as nemo_asr
+import numpy as np
+import torchaudio
 
 import grpc
 
@@ -71,6 +74,8 @@ class BackendServicer(backend_pb2_grpc.BackendServicer):
         try:
             print(f"Loading NEMO ASR model from {model_name}", file=sys.stderr)
             self.model = nemo_asr.models.ASRModel.from_pretrained(model_name=model_name)
+            self.model.to(self.device)
+            self.model.eval()
             print("NEMO ASR model loaded successfully", file=sys.stderr)
         except Exception as err:
             print(f"[ERROR] LoadModel failed: {err}", file=sys.stderr)
@@ -89,10 +94,28 @@ class BackendServicer(backend_pb2_grpc.BackendServicer):
                 print(f"Error: Audio file not found: {audio_path}", file=sys.stderr)
                 return backend_pb2.TranscriptResult(segments=[], text="")
 
-            # NEMO's transcribe method accepts a list of audio paths and returns a list of transcripts
-            results = self.model.transcribe([audio_path])
+            # Load audio file using torchaudio
+            waveform, sample_rate = torchaudio.load(audio_path)
+            
+            # Resample if necessary to match model's expected sample rate (16000 for most NEMO models)
+            target_sample_rate = 16000
+            if sample_rate != target_sample_rate:
+                resampler = torchaudio.transforms.Resample(sample_rate, target_sample_rate)
+                waveform = resampler(waveform)
+            
+            # Convert to mono if stereo
+            if waveform.shape[0] > 1:
+                waveform = waveform.mean(dim=0, keepdim=True)
+            
+            # Transcribe using the model's transcribe method with preprocessed audio
+            # Use the simpler transcription path that doesn't require dataloader setup
+            with torch.no_grad():
+                # Convert waveform to the format expected by the model
+                audio_list = [waveform.squeeze().cpu().numpy()]
+                results = self.model.transcribe(audio_list)
 
             if not results or len(results) == 0:
+                print("No transcription results returned", file=sys.stderr)
                 return backend_pb2.TranscriptResult(segments=[], text="")
 
             # Get the transcript text from the first result
